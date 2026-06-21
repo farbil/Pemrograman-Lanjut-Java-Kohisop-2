@@ -11,8 +11,8 @@ public class Kuitansi {
 
     public void tampilkan() {
         cetakHeader();
-        cetakItemMinuman();
         cetakItemMakanan();
+        cetakItemMinuman();
         cetakFooter();
     }
 

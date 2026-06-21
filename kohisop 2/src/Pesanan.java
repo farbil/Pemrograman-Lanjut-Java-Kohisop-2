@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 public class Pesanan {
     private List<OrderItem> listOrderItem = new ArrayList<>();
@@ -44,6 +45,13 @@ public class Pesanan {
                 minuman.add(item);
             }
         }
+
+        minuman.sort(
+                Comparator.comparingDouble(
+                        i -> i.getMenuItem().getHarga()
+                )
+        );
+
         return minuman;
     }
 
@@ -54,6 +62,13 @@ public class Pesanan {
                 makanan.add(item);
             }
         }
+
+        makanan.sort(
+                Comparator.comparingDouble(
+                        i -> i.getMenuItem().getHarga()
+                )
+        );
+
         return makanan;
     }
 

@@ -9,11 +9,14 @@ public class KohiSopApp {
     private Map<String, MenuItem> daftarMenu;
     private Pesanan pesanan;
     private Scanner scanner;
+    private List<Membership> daftarMember;
 
     public KohiSopApp() {
         daftarMenu  = new LinkedHashMap<>();
         pesanan     = new Pesanan();
         scanner     = new Scanner(System.in);
+
+        daftarMember = new ArrayList<>();
     }
 
     public static void main(String[] args) {
