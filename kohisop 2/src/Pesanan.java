@@ -72,10 +72,10 @@ public class Pesanan {
         return makanan;
     }
 
-    public double getTotalDenganPajak() {
+    public double getTotalDenganPajak(Membership member) {
         double total = 0;
         for(OrderItem item : listOrderItem) {
-            total += item.getTotalDenganPajak();
+            total += item.getTotalDenganPajak(member);
         }
         return total;
     }

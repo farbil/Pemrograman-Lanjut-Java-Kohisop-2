@@ -261,7 +261,7 @@ public class KohiSopApp {
                     try {
                         double saldo = Double.parseDouble(scanner.nextLine().trim());
                         QRIS qris = new QRIS(saldo);
-                        double totalAkhir = qris.hitungTotal(pesanan.getTotalDenganPajak());
+                        double totalAkhir = qris.hitungTotal(pesanan.getTotalDenganPajak(null));
                         if (!qris.validasiSaldo(totalAkhir)) {
                             System.out.printf("Error: Saldo tidak cukup! Dibutuhkan: %.2f IDR%n", totalAkhir);
                         } else return qris;
@@ -275,7 +275,7 @@ public class KohiSopApp {
                     try {
                         double saldo = Double.parseDouble(scanner.nextLine().trim());
                         EMoney emoney = new EMoney(saldo);
-                        double totalAkhir = emoney.hitungTotal(pesanan.getTotalDenganPajak());
+                        double totalAkhir = emoney.hitungTotal(pesanan.getTotalDenganPajak(null));
                         if (!emoney.validasiSaldo(totalAkhir)) {
                             System.out.printf("Error: Saldo tidak cukup! Dibutuhkan: %.2f IDR%n", totalAkhir);
                         } else return emoney;
@@ -313,7 +313,7 @@ public class KohiSopApp {
     }
 
     private void tampilkanKuitansi(IPaymentChannel channel, IMataUang mataUang) {
-        Kuitansi kuitansi = new Kuitansi(pesanan, channel, mataUang);
+        Kuitansi kuitansi = new Kuitansi(pesanan, channel, mataUang, null);
         kuitansi.tampilkan();
     }
 

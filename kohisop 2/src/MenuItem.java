@@ -23,7 +23,7 @@ public abstract class MenuItem {
 
     public abstract String getKategori();
 
-    protected abstract double hitungPajak();
+    protected abstract double hitungPajak(Membership member);
 
 }
     

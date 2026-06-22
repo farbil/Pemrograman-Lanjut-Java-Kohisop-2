@@ -9,7 +9,11 @@ public class Makanan extends MenuItem {
     }
 
     @Override
-    protected double hitungPajak() {
+    protected double hitungPajak(Membership member) {
+        if (member != null && member.isBebasPajak()) {
+            return 0.0;
+        }
+
         double hrg = getHarga();
         if(hrg > 50) {
             return hrg * 0.08;

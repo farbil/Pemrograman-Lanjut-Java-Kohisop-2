@@ -2,11 +2,13 @@ public class Kuitansi {
     private Pesanan pesanan;
     private IPaymentChannel channel;
     private IMataUang mataUang;
+    private Membership member;
 
-    public Kuitansi(Pesanan pesanan, IPaymentChannel channel, IMataUang mataUang) {
+    public Kuitansi(Pesanan pesanan, IPaymentChannel channel, IMataUang mataUang, Membership member) {
         this.pesanan = pesanan;
         this.channel = channel;
         this.mataUang = mataUang;
+        this.member = member;
     }
 
     public void tampilkan() {
@@ -37,7 +39,7 @@ public class Kuitansi {
 
             System.out.printf("Kode: %s | %s (IDR %.2f / porsi)\n", menu.getKode(), menu.getNama(), menu.getHarga());
             System.out.printf("Kuantitas    : %d porsi\n", item.getKuantitas());
-            System.out.printf("Total pajak    : IDR %.2f\n", item.getPajak());
+            System.out.printf("Total pajak    : IDR %.2f\n", item.getPajak(member));
             System.out.printf("Subtotal    : IDR %.2f\n\n", item.getSubtotal());
         }
     }
@@ -49,7 +51,7 @@ public class Kuitansi {
 
             System.out.printf("Kode: %s | %s (IDR %.2f / porsi)\n", menu.getKode(), menu.getNama(), menu.getHarga());
             System.out.printf("Kuantitas    : %d porsi\n", item.getKuantitas());
-            System.out.printf("Total pajak    : IDR %.2f\n", item.getPajak());
+            System.out.printf("Total pajak    : IDR %.2f\n", item.getPajak(member));
             System.out.printf("Subtotal    : IDR %.2f\n\n", item.getSubtotal());
         }
     }
@@ -64,7 +66,7 @@ public class Kuitansi {
             totalDiluarPajakIDR += item.getSubtotal();
         }
 
-        double totalDenganPajakIDR = pesanan.getTotalDenganPajak();
+        double totalDenganPajakIDR = pesanan.getTotalDenganPajak(member);
         double nominalDiskonIDR = totalDenganPajakIDR * channel.getDiskon();
         double nominalAdminIDR = channel.getBiayaAdmin();
 

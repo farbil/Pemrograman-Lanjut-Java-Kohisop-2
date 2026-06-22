@@ -34,12 +34,12 @@ public class OrderItem {
         return menuItem.getHarga() * kuantitas;
     }
 
-    public double getPajak() {
-        return menuItem.hitungPajak() * kuantitas;
+    public double getPajak(Membership member) {
+        return menuItem.hitungPajak(member) * kuantitas;
     }
 
-    public double getTotalDenganPajak() {
-        return getSubtotal() + getPajak();
+    public double getTotalDenganPajak(Membership member) {
+        return getSubtotal() + getPajak(member);
     }
 
     private boolean validateKuantitas(int qty) {
