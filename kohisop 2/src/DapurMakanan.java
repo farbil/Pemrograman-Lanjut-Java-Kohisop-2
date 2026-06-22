@@ -25,3 +25,5 @@ public class DapurMakanan {
         return antreanMakanan.poll(); // poll() akan mengambil dan menghapus elemen dengan prioritas tertinggi
     }
 }
+
+// eh ini aku cuma coba commit
