@@ -11,12 +11,30 @@ public class KohiSopApp {
     private Scanner scanner;
     private List<Membership> daftarMember;
 
+    private DapurMakanan dapurMakanan;
+    private DapurMinuman dapurMinuman;
+    private int jumlahPelanggan = 0;
+
     public KohiSopApp() {
         daftarMenu  = new LinkedHashMap<>();
         pesanan     = new Pesanan();
         scanner     = new Scanner(System.in);
 
         daftarMember = new ArrayList<>();
+        dapurMakanan = new DapurMakanan();
+        dapurMinuman = new DapurMinuman();
+    }
+
+    private Membership getOrAddMember(String nama) {
+        for (Membership m : daftarMember) {
+            if (m.getNama().equalsIgnoreCase(nama)) {
+                return m;
+            }
+        }
+
+        Membership newMember = new Membership(nama);
+        daftarMember.add(newMember);
+        return newMember;
     }
 
     public static void main(String[] args) {
@@ -25,33 +43,82 @@ public class KohiSopApp {
 
     public void run() {
         initMenu();
-        tampilkanMenu();
-        inputPesanan();
 
-        if (pesanan.isBatalkan()) {
-            System.out.println("Pesanan dibatalkan. Terima kasih!");
-            return;
+        while (true) {
+            pesanan = new Pesanan();
+            
+            System.out.println("\n=======================================================================");
+            System.out.println("                  SELAMAT DATANG DI KOHISOP                            ");
+            System.out.println("=======================================================================");
+
+            System.out.print("Masukkan nama pelanggan: ");
+            String namaPelanggan = scanner.nextLine().trim();
+            if (namaPelanggan.isEmpty()) {
+                System.out.println("Nama tidak boleh kosong!");
+                continue;
+            }
+            Membership member = getOrAddMember(namaPelanggan);
+
+            tampilkanMenu();
+            inputPesanan();
+
+            if (!pesanan.isBatalkan()) {
+                inputKuantitas();
+
+                if (!pesanan.isBatalkan()) {
+                    if (pesanan.getItemMinuman().isEmpty() && pesanan.getItemMakanan().isEmpty()) {
+                        System.out.println("Tidak ada item dalam pesanan.");
+                    } else {
+                        IMataUang mataUang      = pilihaMataUang();
+                        IPaymentChannel channel = pilihChannelPembayaran(member, mataUang);
+                        tampilkanKuitansi(channel, mataUang, member);
+
+                        jumlahPelanggan++;
+
+                        for (OrderItem item : pesanan.getItemMakanan()) {
+                            dapurMakanan.tambahKeDapur(item);
+                        }
+                        for (OrderItem item : pesanan .getItemMinuman()) {
+                            dapurMinuman.tambahKeDapur(item);
+                        }
+
+                        if (jumlahPelanggan % 3 == 0) {
+                            System.out.println("\n=======================================================================");
+                            System.out.println(">>> TIM DAPUR MULAI MEMPROSES PESANAN DARI 3 PELANGGAN TERAKHIR <<<");
+                            System.out.println("=======================================================================");
+
+                            System.out.println("--- Proses Makanan (Prioritas Harga) ---");
+                            OrderItem prosesMak = dapurMakanan.prosesMakanan();
+                            while(prosesMak != null) {
+                                System.out.println("Memasak: " + prosesMak.getMenuItem().getNama());
+                                prosesMak = dapurMakanan.prosesMakanan();
+                            }
+
+                            System.out.println("\n--- Proses Minuman (Last-Ordered-First-Served) ---");
+                            OrderItem prosesMin = dapurMinuman.prosesMinuman();
+                            while(prosesMin != null) {
+                                System.out.println("Membuat: " + prosesMin.getMenuItem().getNama());
+                                prosesMin = dapurMinuman.prosesMinuman();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (pesanan.isBatalkan()) {
+                System.out.println("Pesanan dibatalkan.");
+            }
+
+            System.out.print("\nApakah Anda ingin membuat pesanan baru? (Y/N): ");
+            String lanjut = scanner.nextLine().trim().toUpperCase();
+            if (!lanjut.equals("Y")) {
+                System.out.println("Program selesai. Sampai jumpa lagi!");
+                break;
+            }
         }
-
-        inputKuantitas();
-
-        if (pesanan.isBatalkan()) {
-            System.out.println("Pesanan dibatalkan. Terima kasih!");
-            return;
-        }
-
-        if (pesanan.getItemMinuman().isEmpty() && pesanan.getItemMakanan().isEmpty()) {
-            System.out.println("Tidak ada item dalam pesanan. Program selesai!");
-            return;
-        }
-
-        IPaymentChannel channel = pilihChannelPembayaran();
-        IMataUang mataUang      = pilihaMataUang();
-        tampilkanKuitansi(channel, mataUang);
     }
 
     private void initMenu() {
-        //Minuman
         daftarMenu.put("A1", new Minuman("A1", "Caffe Latte",                         46));
         daftarMenu.put("A2", new Minuman("A2", "Cappuccino",                           46));
         daftarMenu.put("E1", new Minuman("E1", "Caffe Americano",                      37));
@@ -62,7 +129,7 @@ public class KohiSopApp {
         daftarMenu.put("B1", new Minuman("B1", "Freshly Brewed Coffee",               23));
         daftarMenu.put("B2", new Minuman("B2", "Vanilla Sweet Cream Cold Brew",       50));
         daftarMenu.put("B3", new Minuman("B3", "Cold Brew",                           44));
-        // Makanan
+
         daftarMenu.put("M1", new Makanan("M1", "Petemania Pizza",                    112));
         daftarMenu.put("M2", new Makanan("M2", "Mie Rebus Super Mario",               35));
         daftarMenu.put("M3", new Makanan("M3", "Ayam Bakar Goreng Rebus Spesial",     72));
@@ -77,18 +144,25 @@ public class KohiSopApp {
         System.out.println("=======================================================================");
         System.out.println("                          MENU KOHISOP                                ");
         System.out.println("=======================================================================");
-        System.out.printf("%-5s  %-38s  %s%n", "Kode", "Menu Minuman", "Harga (Rp)");
-        System.out.println("-----------------------------------------------------------------------");
-        for (MenuItem item : daftarMenu.values()) {
-            if (item instanceof Minuman)
-                System.out.printf("%-5s  %-38s  %.0f%n", item.getKode(), item.getNama(), item.getHarga());
-        }
-        System.out.println("-----------------------------------------------------------------------");
         System.out.printf("%-5s  %-38s  %s%n", "Kode", "Menu Makanan", "Harga (Rp)");
         System.out.println("-----------------------------------------------------------------------");
-        for (MenuItem item : daftarMenu.values()) {
-            if (item instanceof Makanan)
-                System.out.printf("%-5s  %-38s  %.0f%n", item.getKode(), item.getNama(), item.getHarga());
+
+        List<MenuItem> makanan = new ArrayList<>();
+        for (MenuItem item : daftarMenu.values()) if (item instanceof Makanan) makanan.add(item);
+        makanan.sort((a, b) -> a.getKode().compareToIgnoreCase(b.getKode()));
+        for (MenuItem item : makanan) {
+            System.out.printf("%-5s  %-38s  %.0f%n", item.getKode(), item.getNama(), item.getHarga());
+        }
+
+        System.out.println("-----------------------------------------------------------------------");
+        System.out.printf("%-5s  %-38s  %s%n", "Kode", "Menu Minuman", "Harga (Rp)");
+        System.out.println("-----------------------------------------------------------------------");
+
+        List<MenuItem> minuman = new ArrayList<>();
+        for (MenuItem item : daftarMenu.values()) if (item instanceof Minuman) minuman.add(item);
+        minuman.sort((a, b) -> a.getKode().compareToIgnoreCase(b.getKode()));
+        for (MenuItem item : minuman) {
+            System.out.printf("%-5s  %-38s  %.0f%n", item.getKode(), item.getNama(), item.getHarga());
         }
         System.out.println("=======================================================================");
     }
@@ -151,7 +225,6 @@ public class KohiSopApp {
         tampilkanDaftarPesanan();
         System.out.println("(Enter = default 1 | 0 atau S = skip/batal item | CC = batal semua)\n");
 
-        //Minuman
         if (!pesanan.getItemMinuman().isEmpty()) {
             System.out.println("--- Minuman (maks 3 porsi per jenis) ---");
             List<OrderItem> toRemove = new ArrayList<>();
@@ -188,7 +261,6 @@ public class KohiSopApp {
             toRemove.forEach(i -> pesanan.hapusItem(i.getMenuItem().getKode()));
         }
 
-        //Makanan
         if (!pesanan.getItemMakanan().isEmpty()) {
             System.out.println("\n--- Makanan (maks 2 porsi per jenis) ---");
             List<OrderItem> toRemove = new ArrayList<>();
@@ -227,26 +299,29 @@ public class KohiSopApp {
 
     private void tampilkanDaftarPesanan() {
         System.out.println("-----------------------------------------------------------------------");
+        System.out.printf("%-5s  %-38s  %s%n", "Kode", "Makanan", "Kuantitas");
+        System.out.println("-----------------------------------------------------------------------");
+
+        if (pesanan.getItemMakanan().isEmpty()) System.out.println("  (tidak ada)");
+        else for (OrderItem i : pesanan.getItemMakanan())
+            System.out.printf("%-5s  %-38s  %d%n", i.getMenuItem().getKode(), i.getMenuItem().getNama(), i.getKuantitas());
+
+        System.out.println("-----------------------------------------------------------------------");
         System.out.printf("%-5s  %-38s  %s%n", "Kode", "Minuman", "Kuantitas");
         System.out.println("-----------------------------------------------------------------------");
         if (pesanan.getItemMinuman().isEmpty()) System.out.println("  (tidak ada)");
         else for (OrderItem i : pesanan.getItemMinuman())
             System.out.printf("%-5s  %-38s  %d%n", i.getMenuItem().getKode(), i.getMenuItem().getNama(), i.getKuantitas());
-
-        System.out.println("-----------------------------------------------------------------------");
-        System.out.printf("%-5s  %-38s  %s%n", "Kode", "Makanan", "Kuantitas");
-        System.out.println("-----------------------------------------------------------------------");
-        if (pesanan.getItemMakanan().isEmpty()) System.out.println("  (tidak ada)");
-        else for (OrderItem i : pesanan.getItemMakanan())
-            System.out.printf("%-5s  %-38s  %d%n", i.getMenuItem().getKode(), i.getMenuItem().getNama(), i.getKuantitas());
         System.out.println("-----------------------------------------------------------------------");
     }
 
-    private IPaymentChannel pilihChannelPembayaran() {
+    private IPaymentChannel pilihChannelPembayaran(Membership member, IMataUang mataUang) {
         System.out.println("\n=== PILIH CHANNEL PEMBAYARAN ===");
         System.out.println("1. Tunai   - Tidak ada diskon");
         System.out.println("2. QRIS    - Diskon 5%");
         System.out.println("3. eMoney  - Diskon 7%, biaya admin Rp 20");
+
+        double totalDenganPajakIDR = pesanan.getTotalDenganPajak(member);
 
         while (true) {
             System.out.print("Pilih (1/2/3): ");
@@ -261,7 +336,13 @@ public class KohiSopApp {
                     try {
                         double saldo = Double.parseDouble(scanner.nextLine().trim());
                         QRIS qris = new QRIS(saldo);
-                        double totalAkhir = qris.hitungTotal(pesanan.getTotalDenganPajak(null));
+                        double totalAkhir = qris.hitungTotal(totalDenganPajakIDR);
+                        
+                        if (mataUang instanceof IDR && member != null && member.getPoin() > 0) {
+                            int poinDipakai = Math.min(member.getPoin(), (int) Math.floor(totalAkhir / 2.0));
+                            totalAkhir -= (poinDipakai * 2);
+                        }
+                        
                         if (!qris.validasiSaldo(totalAkhir)) {
                             System.out.printf("Error: Saldo tidak cukup! Dibutuhkan: %.2f IDR%n", totalAkhir);
                         } else return qris;
@@ -275,7 +356,13 @@ public class KohiSopApp {
                     try {
                         double saldo = Double.parseDouble(scanner.nextLine().trim());
                         EMoney emoney = new EMoney(saldo);
-                        double totalAkhir = emoney.hitungTotal(pesanan.getTotalDenganPajak(null));
+                        double totalAkhir = emoney.hitungTotal(totalDenganPajakIDR);
+                        
+                        if (mataUang instanceof IDR && member != null && member.getPoin() > 0) {
+                            int poinDipakai = Math.min(member.getPoin(), (int) Math.floor(totalAkhir / 2.0));
+                            totalAkhir -= (poinDipakai * 2);
+                        }
+                        
                         if (!emoney.validasiSaldo(totalAkhir)) {
                             System.out.printf("Error: Saldo tidak cukup! Dibutuhkan: %.2f IDR%n", totalAkhir);
                         } else return emoney;
@@ -312,8 +399,8 @@ public class KohiSopApp {
         }
     }
 
-    private void tampilkanKuitansi(IPaymentChannel channel, IMataUang mataUang) {
-        Kuitansi kuitansi = new Kuitansi(pesanan, channel, mataUang, null);
+    private void tampilkanKuitansi(IPaymentChannel channel, IMataUang mataUang, Membership member) {
+        Kuitansi kuitansi = new Kuitansi(pesanan, channel, mataUang, member);
         kuitansi.tampilkan();
     }
 

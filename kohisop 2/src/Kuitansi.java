@@ -75,18 +75,49 @@ public class Kuitansi {
         double totalAwalMataUang = konversiMataUang(totalDiluarPajakIDR);
 
         double tagihanAkhirIDR = hitungTotalAkhirIDR(totalDenganPajakIDR);
+
+        int poinSebelum = member.getPoin();
+        int poinDipakai = 0;
+        double diskonPoinIDR = 0;
+
+        if (mataUang instanceof IDR && poinSebelum > 0) {
+            poinDipakai = Math.min(poinSebelum, (int) Math.floor(tagihanAkhirIDR / 2.0));
+            diskonPoinIDR = poinDipakai * 2;
+            tagihanAkhirIDR -= diskonPoinIDR;
+            member.kurangiPoin(poinDipakai);
+        }
+
+        int poinSetelahDipakai = member.getPoin();
         double totalAkhirMataUang = konversiMataUang(tagihanAkhirIDR);
 
         System.out.printf("Total Harga (di luar pajak)     : IDR %.2f\n", totalDiluarPajakIDR);
         System.out.printf("Total Harga (dengan pajak)      : IDR %.2f\n", totalDenganPajakIDR);
         System.out.printf("Metode Pembayaran               : %s\n", channel.getNama());
-        System.out.printf("Besar Diskon                    : IDR %.2f\n", nominalDiskonIDR);
+        System.out.printf("Besar Diskon Channel            : IDR %.2f\n", nominalDiskonIDR);
         if (nominalAdminIDR > 0) {
             System.out.printf("Biaya Tambahan (Admin)          : IDR %.2f\n", nominalAdminIDR);
         }
+        
+        if (poinDipakai > 0) {
+            System.out.printf("Diskon Poin Member (%d poin)    : IDR %.2f\n", poinDipakai, diskonPoinIDR);
+        }
+
         System.out.println("-----------------------------------------------------------------------");
         System.out.printf("Total Tagihan AWAL (%s)        : %s %.2f\n", simbol, simbol, totalAwalMataUang);
         System.out.printf("Total Tagihan AKHIR (%s)       : %s %.2f\n", simbol, simbol, totalAkhirMataUang);
+
+        System.out.println("-----------------------------------------------------------------------");
+
+        System.out.printf("Kode Member                     : %s\n", member.getKodeMember());
+        System.out.printf("Poin Awal                       : %d\n", poinSebelum);
+        
+        int poinDiperoleh = (int) (tagihanAkhirIDR / 10);
+        if (member.isBebasPajak()) {
+            System.out.println("Status                          : Bebas Pajak & Poin Digandakan (x2)");
+        }
+        member.tambahPoin(tagihanAkhirIDR);
+        System.out.printf("Poin Diperoleh                  : %d\n", (member.getPoin() - poinSetelahDipakai));
+        System.out.printf("Poin Akhir                      : %d\n", member.getPoin());
 
         System.out.println("=======================================================================");
         System.out.println("             Terima kasih dan silakan datang kembali!                  ");
